@@ -22,6 +22,7 @@ system_instruction = """
 【厳格な指示】
 - 回答は必ず「{」から始まり「}」で終わる純粋なJSON文字列のみを出力せよ。
 - Markdownのコードブロックは一切含めるな。
+- 以下のキーを必ず全て含めよ: npc_name, personality, location_tag, dialogue, rejection_dialogue, given_item, music_layer, ambient_sound, trade_history_comment
 - Dialogue: 50文字以内の簡潔なセリフ。
 - 交換理由: 所持アイテムとの関連性を論理的に説明せよ。
 """
@@ -64,8 +65,8 @@ if uploaded_file:
                 raw_text = response.text.replace('```json', '').replace('```', '').strip()
                 st.session_state.last_npc = json.loads(raw_text)
             except Exception as e:
-                # エラー時（429制限など）はモックデータを返してUXを保護
-                st.toast("API制限またはエラーのため、デモ用シナリオを展開します。", icon="⚠️")
+                # エラー時（429制限やJSONパース失敗時）はモックデータを返してUXを保護
+                st.toast("デモ用シナリオを展開します（またはAIが混乱中です）。", icon="⚠️")
                 st.session_state.last_npc = MOCK_NPC
             
             st.session_state.message = ""
@@ -74,27 +75,37 @@ if uploaded_file:
     if st.session_state.last_npc:
         res = st.session_state.last_npc
         
+        # 📝 安全なデータ取得（AIがキーを忘れてもクラッシュさせない）
+        npc_name = res.get('npc_name', '謎の住人')
+        personality = res.get('personality', '不明')
+        location_tag = res.get('location_tag', '#Unknown')
+        dialogue = res.get('dialogue', '……（静かにこちらを見つめている）')
+        trade_history_comment = res.get('trade_history_comment', '沈黙が流れている。')
+        given_item = res.get('given_item', '謎の結晶')
+        music_layer = res.get('music_layer', '環境音')
+        rejection_dialogue = res.get('rejection_dialogue', 'そうですか……。')
+        
         # HUD表示
         st.markdown(f"""
         <div style="background-color: rgba(15, 23, 42, 0.95); padding: 20px; border: 2px solid #06b6d4; border-radius: 12px; color: #e2e8f0;">
             <div style="display: flex; justify-content: space-between;">
-                <h4 style="margin:0; color:#38bdf8;">👤 {res['npc_name']} <span style="font-size:0.8rem; color:#94a3b8;">({res['personality']})</span></h4>
-                <span style="background:#0284c7; padding:2px 8px; border-radius:4px; font-size:0.8rem;">{res['location_tag']}</span>
+                <h4 style="margin:0; color:#38bdf8;">👤 {npc_name} <span style="font-size:0.8rem; color:#94a3b8;">({personality})</span></h4>
+                <span style="background:#0284c7; padding:2px 8px; border-radius:4px; font-size:0.8rem;">{location_tag}</span>
             </div>
-            <p style="font-size: 1.1rem; margin: 15px 0;">「{res['dialogue']}」</p>
-            <p style="font-size: 0.8rem; color: #fbbf24;">💬 履歴照合: {res['trade_history_comment']}</p>
+            <p style="font-size: 1.1rem; margin: 15px 0;">「{dialogue}」</p>
+            <p style="font-size: 0.8rem; color: #fbbf24;">💬 履歴照合: {trade_history_comment}</p>
         </div>
         """, unsafe_allow_html=True)
         
         c1, c2 = st.columns(2)
         if c1.button("✅ 交換する"):
-            st.session_state.trade_history.append(f"{res['npc_name']}と{res['given_item']}交換")
-            st.session_state.current_item = res['given_item']
-            st.session_state.message = f"🎁 {res['given_item']} を入手！ (🎵BGM: +{res['music_layer']})"
+            st.session_state.trade_history.append(f"{npc_name}と{given_item}交換")
+            st.session_state.current_item = given_item
+            st.session_state.message = f"🎁 {given_item} を入手！ (🎵BGM: +{music_layer})"
             st.session_state.last_npc = None
             st.rerun()
         if c2.button("❌ 断る"):
-            st.session_state.message = f"💬 {res['npc_name']}: 「{res.get('rejection_dialogue', '...')}」"
+            st.session_state.message = f"💬 {npc_name}: 「{rejection_dialogue}」"
             st.session_state.last_npc = None
             st.rerun()
 
