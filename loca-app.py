@@ -33,7 +33,7 @@ MOCK_NPC = {
     "npc_name": "久留米の案内人",
     "personality": "穏やか",
     "location_tag": "#Historical",
-    "dialogue": "よく来ましたね。あなたが持つそのアイテム、この街の記憶が宿る『導きの羅針盤』と交換しませんか？",
+    "dialogue": "よく来ましたね。この街の記憶が宿る『導きの羅針盤』いかがですか？",
     "rejection_dialogue": "そうですか。また気が向いたら声をかけてください。",
     "given_item": "導きの羅針盤",
     "music_layer": "チェロと環境音",
